@@ -17,33 +17,28 @@ class CASMiddleware(object):
         request = webob.Request(environ)
 
         if request.path_info == '/cas/logout':
-            print "Logging out", request.url
             cas_server = self._config['CAS.server']
-            service_url = urllib.quote(request.application_url)
-            logout_url = '{}/logout?service={}'.format(cas_server, service_url)
+            params = urllib.urlencode({'service': request.application_url})
+            logout_url = '{}/logout?{}'.format(cas_server, params)
             response = webob.exc.HTTPFound(location=logout_url)
             self._remove_username_cookie(request, response)
             return response(environ, start_response)
 
         username = None
         if 'ticket' in request.GET:
-            print "Got ticket", request.url
             username = self._get_username_from_ticket(request)
-            response = webob.exc.HTTPFound(location=request.path_url)
-            self._add_username_to_cookie(request, response, username)
-            return response(environ, start_response)
+            if username:
+                response = webob.exc.HTTPFound(location=request.path_url)
+                self._add_username_to_cookie(request, response, username)
+                return response(environ, start_response)
 
-        if not username:
-            username = self._get_username_from_cookie(request)
-
-        print "Username from cookie", username
+        username = self._get_username_from_cookie(request)
         new_environ = self._add_logout_url_to_environ(environ)
         if username:
             new_environ = self._add_username_to_environ(username, new_environ)
 
         new_request = webob.Request(new_environ)
         app_response = new_request.get_response(self._app)
-        print request.url, app_response.status
 
         if app_response.status_code == 401:
             params = urllib.urlencode({'service':
@@ -74,7 +69,7 @@ class CASMiddleware(object):
         validation_tree = ET.fromstring(validation_response.text)
         ns = {'cas': 'http://www.yale.edu/tp/cas'}
         success = validation_tree.find('./cas:authenticationSuccess', ns)
-        if success:
+        if success is not None:
             return success.find('./cas:user', ns).text
 
     def _get_cookie(self, request, expired=False):

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.0'
+version = '0.1'
 
 setup(name='wsgicas',
       version=version,
@@ -18,7 +18,8 @@ setup(name='wsgicas',
       include_package_data=True,
       zip_safe=False,
       install_requires=[
-          # -*- Extra requirements: -*-
+          'requests',
+          'webob',
       ],
       entry_points="""
       # -*- Entry points: -*-
