@@ -1,4 +1,7 @@
-import urllib
+from future import standard_library
+standard_library.install_aliases()
+
+import urllib.parse
 import xml.etree.ElementTree as ET
 
 import requests
@@ -18,7 +21,7 @@ class CASMiddleware(object):
 
         if request.path_info == '/cas/logout':
             cas_server = self._config['CAS.server']
-            params = urllib.urlencode({'service': request.application_url})
+            params = urllib.parse.urlencode({'service': request.application_url})
             logout_url = '{}/logout?{}'.format(cas_server, params)
             response = webob.exc.HTTPFound(location=logout_url)
             self._remove_username_cookie(request, response)
@@ -41,7 +44,7 @@ class CASMiddleware(object):
         app_response = new_request.get_response(self._app)
 
         if app_response.status_code == 401:
-            params = urllib.urlencode({'service':
+            params = urllib.parse.urlencode({'service':
                                        self._make_service_url(request)})
             login_url = '{}/login?{}'.format(self._config['CAS.server'],
                                              params)
@@ -122,5 +125,5 @@ class CASMiddleware(object):
                 if request.environ['SERVER_PORT'] != '80':
                     url += ':' + request.environ['SERVER_PORT']
 
-        url += urllib.quote(request.environ.get('SCRIPT_NAME', ''))
+        url += urllib.parse.quote(request.environ.get('SCRIPT_NAME', ''))
         return url
